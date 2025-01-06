@@ -1,0 +1,14 @@
+MyChatGPT-Project/
+├── docs/                        # Archivos .md cargados en Knowledge.
+│   ├── plan_nutricion.md        # Modelos y planes de nutrición.
+│   ├── rutinas_instrucciones.md # Modelos y rutinas de entrenamiento.
+│   ├── fuentes_links.md         # Fuentes confiables y enlaces útiles.
+│   ├── guia_uso_chatgpt.md      # Guía para usar tu ChatGPT personalizado.
+│   └── changelog.md             # Registro de cambios y actualizaciones.
+├── templates/                   # Plantillas en Markdown para personalización.
+│   ├── tabla_diaria.md          # Plantilla para tablas de nutrición diarias.
+│   ├── tabla_semanal.md         # Plantilla para rutinas semanales.
+│   ├── tabla_suplementos.md     # Plantilla para tablas específicas de suplementos.
+│   └── tabla_progreso.md        # Plantilla para registrar avances del usuario.
+├── README.md                    # Descripción general del proyecto.
+└── bulk.com.txt                 # Nota de referencia para el enlace www.bulk.com.
