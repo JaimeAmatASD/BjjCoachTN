@@ -17,7 +17,7 @@
 - [Estructura del repo](#-estructura-del-repo)
 - [Despliegue rápido](#-despliegue-rápido)
 - [Personalización](#-personalización)
-- [Integración con Make.com](#-integración-con-makecom)
+- [Integración con Google Sheets](#-integración-con-google-sheets)
 - [Roadmap](#-roadmap)
 - [Licencia](#-licencia)
 
@@ -32,8 +32,8 @@ A diferencia de un chatbot genérico de fitness, el sistema:
 - 🎯 **Hace una entrevista guiada** al atleta antes de generar nada (edad, peso, nivel, fecha de torneo, estilo, frecuencia, objetivos).
 - 🏋️ **Conoce los principios de periodización** para grappling (off-season, pretemporada, temporada) basados en literatura de fuerza y acondicionamiento.
 - 🍎 **Selecciona modelos nutricionales** apropiados al objetivo (déficit calórico, IIFYM, ciclado de carbos, ayuno intermitente, mediterránea, etc.).
-- 📊 **Registra el progreso** del atleta vía un webhook externo (Make.com) que persiste los datos en una hoja de cálculo.
-- 📚 **Usa una biblioteca propia** de 100 ejercicios técnicos y de fuerza para grappling, organizados por categoría.
+- 📊 **Registra el progreso** del atleta vía un webhook (Google Apps Script) que persiste los datos directamente en Google Sheets.
+- 📚 **Usa una biblioteca propia** de 110 ejercicios técnicos y de fuerza para grappling, organizados por categoría.
 
 ---
 
@@ -88,9 +88,9 @@ El asistente nunca lanza un plan antes de tener los 6 datos clave. Una vez que l
 │ SYSTEM       │  │ KNOWLEDGE    │  │ ACTION / TOOL    │
 │ PROMPT       │  │ BASE         │  │ (Webhook)        │
 │              │  │              │  │                  │
-│ - Reglas     │  │ - Modelos    │  │ POST a Make.com  │
-│ - Tono       │  │   nutrición  │  │ → Google Sheets  │
-│ - Flujo de   │  │ - 100 ejerc. │  │   (registro de   │
+│ - Reglas     │  │ - Modelos    │  │ POST a Apps      │
+│ - Tono       │  │   nutrición  │  │ Script → Sheets  │
+│ - Flujo de   │  │ - 110 ejerc. │  │   (registro de   │
 │   entrevista │  │ - Periodizac.│  │    sesiones)     │
 │ - Objetivos  │  │ - Tablas     │  │                  │
 │              │  │   nutric.    │  │                  │
@@ -101,7 +101,7 @@ Tres componentes desacoplados:
 
 1. **`prompts/`** — Define el comportamiento del asistente (qué pregunta, en qué orden, qué tono usa).
 2. **`knowledge/`** — La base de conocimiento que el modelo consulta (modelos nutricionales, biblioteca de ejercicios, fundamentos de periodización).
-3. **`integrations/`** — Conexiones a sistemas externos para persistencia (webhook Make.com → Google Sheets).
+3. **`integrations/`** — Conexiones a sistemas externos para persistencia (webhook Apps Script → Google Sheets).
 
 ---
 
@@ -113,6 +113,18 @@ BjjCoachTN/
 ├── LICENSE
 ├── CHANGELOG.md
 ├── .gitignore
+├── .mlc.json                      ← Config para el check de links en CI
+│
+├── app/                           ← Interfaz web
+│   ├── streamlit_app.py           ← Chat sobre la API de Claude (streaming)
+│   └── requirements.txt
+│
+├── evals/                         ← Suite de tests automatizados
+│   └── test_interview_flow.py     ← Verifica el flujo de 6 preguntas
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 ← Lint JSON + check de links en Markdown
 │
 ├── docs/                          ← Documentación técnica
 │   ├── architecture.md            ← Arquitectura detallada
@@ -130,14 +142,18 @@ BjjCoachTN/
 │   │   └── food_tables.md         ← Tabla de macros por alimento
 │   ├── training/
 │   │   ├── training_fundamentals.md  ← Periodización para grappling
-│   │   └── exercises_library.md      ← 100 ejercicios categorizados
+│   │   └── exercises_library.md      ← 110 ejercicios categorizados
 │   └── resources/
 │       └── trusted_sources.md     ← Fuentes externas confiables
 │
 ├── integrations/
-│   └── make_webhook/              ← Integración con Make.com
-│       ├── README.md
-│       └── openapi_schema.json    ← Schema para registrar la Action
+│   ├── apps_script/               ← Integración recomendada (sin intermediarios)
+│   │   ├── Code.gs                ← Script con doPost, registro, consulta y tests
+│   │   ├── openapi_schema.json    ← Schema para la Action del LLM
+│   │   └── README.md              ← Setup paso a paso
+│   └── make_webhook/              ← Integración alternativa (no-code)
+│       ├── openapi_schema.json
+│       └── README.md
 │
 └── examples/
     └── conversation_examples.md   ← Conversaciones de ejemplo
@@ -153,7 +169,7 @@ BjjCoachTN/
 2. En **Instructions**, pegá el contenido de [`prompts/system_prompt.md`](./prompts/system_prompt.md).
 3. En **Conversation starters**, copiá los de [`prompts/conversation_starters.md`](./prompts/conversation_starters.md).
 4. En **Knowledge**, subí los archivos de la carpeta `knowledge/`.
-5. (Opcional) En **Actions**, importá [`integrations/make_webhook/openapi_schema.json`](./integrations/make_webhook/openapi_schema.json) y configurá tu webhook de Make.com.
+5. (Opcional) En **Actions**, importá [`integrations/apps_script/openapi_schema.json`](./integrations/apps_script/openapi_schema.json) y configurá el endpoint de tu Apps Script.
 
 ### Opción B — Claude Project
 
@@ -165,6 +181,14 @@ BjjCoachTN/
 ### Opción C — Vía API directa
 
 Ver [`docs/deployment.md`](./docs/deployment.md) para implementación con Claude Messages API o OpenAI Chat Completions con function calling.
+
+### Opción D — Streamlit app (incluida en este repo)
+
+1. Instalá las dependencias: `pip install -r app/requirements.txt`
+2. Configurá tu clave: `export ANTHROPIC_API_KEY=sk-ant-...`
+3. Arrancá: `streamlit run app/streamlit_app.py`
+
+Carga automáticamente el system prompt y los archivos de knowledge. Chat con streaming en tiempo real.
 
 ---
 
@@ -218,11 +242,12 @@ Setup en [`integrations/make_webhook/README.md`](./integrations/make_webhook/REA
 
 - [x] Sistema de prompts en español
 - [x] Base de conocimiento de nutrición y entrenamiento
-- [x] Integración con Make.com vía webhook
-- [x] 100 ejercicios categorizados
+- [x] 110 ejercicios categorizados (10 categorías + 10 extras de cuello)
+- [x] Integración Apps Script → Google Sheets (sin intermediarios)
+- [x] Dashboard web Streamlit sobre la API de Claude (`app/`)
+- [x] Suite de evals para verificar el flujo de entrevista (`evals/`)
+- [x] CI/CD: lint JSON + check de links en Markdown
 - [ ] Versión en inglés del system prompt
-- [ ] Dashboard web (Streamlit / Next.js) sobre la API de Claude
-- [ ] Dataset de evals para medir calidad de los planes generados
 - [ ] Modo "voice coach" con TTS para entrenamientos en vivo
 - [ ] Adaptación a MMA y boxeo
 

@@ -1,6 +1,6 @@
-# Actions Prompt — Integración con webhook de Make.com
+# Actions Prompt — Integración con webhook (Apps Script / Make.com)
 
-> Este prompt complementa al `system_prompt.md` y rige el comportamiento del asistente cuando interactúa con el webhook de Make.com para registrar/consultar entrenamientos.
+> Este prompt complementa al `system_prompt.md` y rige el comportamiento del asistente cuando interactúa con el webhook para registrar/consultar entrenamientos. Aplica tanto al endpoint de Apps Script como al de Make.com — el contrato del payload es idéntico.
 
 ---
 
