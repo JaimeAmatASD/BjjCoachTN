@@ -184,23 +184,33 @@ Detalle completo en [`docs/customization.md`](./docs/customization.md).
 
 ---
 
-## 🔌 Integración con Make.com
+## 🔌 Integración con Google Sheets
 
-El asistente puede hacer POST a un webhook de Make.com para registrar entrenamientos en una hoja de cálculo. El flujo:
+El asistente puede hacer POST a un webhook para registrar entrenamientos directamente en Google Sheets. El flujo:
 
 ```
 Atleta → "Registrá mi sesión de hoy"
    ↓
 LLM detecta intención y llama al tool
    ↓
-POST https://hook.eu2.make.com/<TU-WEBHOOK-ID>
+POST https://script.google.com/macros/s/TU-DEPLOYMENT-ID/exec
    ↓
-Make.com → Google Sheets / Notion / Airtable
+Apps Script escribe en Google Sheets
    ↓
 Confirmación al atleta
 ```
 
-Schema y setup en [`integrations/make_webhook/README.md`](./integrations/make_webhook/README.md).
+### Opción recomendada — Google Apps Script (sin intermediarios)
+
+Un script de Apps Script actúa como endpoint HTTP directo a tu spreadsheet. Sin cuenta de terceros, sin límites de operaciones, código 100% tuyo.
+
+Setup completo en [`integrations/apps_script/README.md`](./integrations/apps_script/README.md).
+
+### Opción alternativa — Make.com
+
+Si preferís un enfoque no-code o necesitás enrutar a Notion / Airtable / Postgres además de Sheets, el módulo original sigue disponible.
+
+Setup en [`integrations/make_webhook/README.md`](./integrations/make_webhook/README.md).
 
 ---
 

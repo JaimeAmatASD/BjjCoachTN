@@ -1,0 +1,146 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GrappleCoach Progress — Apps Script",
+    "description": "Webhook directo a Google Sheets vía Apps Script. Soporta registro de sesiones y consulta de historial sin intermediarios.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "GrappleCoach",
+      "url": "https://github.com/JaimeAmatASD/BjjCoachTN"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://script.google.com/macros/s/TU-DEPLOYMENT-ID/exec",
+      "description": "Apps Script Web App — reemplazá TU-DEPLOYMENT-ID por el ID real al deployar"
+    }
+  ],
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "registrarOConsultarEntrenamiento",
+        "summary": "Registra un entrenamiento o consulta el historial del atleta",
+        "description": "Endpoint único con dos modos: 'registro' guarda una sesión nueva en Google Sheets; 'consulta' devuelve el historial filtrado por usuario, ejercicio y/o rango de días.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/RegistroEntrenamiento" },
+                  { "$ref": "#/components/schemas/ConsultaHistorial" }
+                ],
+                "discriminator": {
+                  "propertyName": "modo"
+                }
+              },
+              "examples": {
+                "registro": {
+                  "summary": "Registrar una sesión de fuerza",
+                  "value": {
+                    "modo": "registro",
+                    "usuario": "Ana BJJ",
+                    "fecha": "2026-04-25",
+                    "ejercicio": "Sentadilla trasera",
+                    "series": 5,
+                    "repeticiones": 5,
+                    "carga_kg": 100,
+                    "duracion_min": 45,
+                    "observaciones": "Última serie con buena ejecución"
+                  }
+                },
+                "consulta": {
+                  "summary": "Consultar historial de los últimos 30 días",
+                  "value": {
+                    "modo": "consulta",
+                    "usuario": "Ana BJJ",
+                    "ejercicio": "Sentadilla trasera",
+                    "rango_dias": 30
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación exitosa",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RespuestaOk" }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload inválido",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RespuestaError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegistroEntrenamiento": {
+        "type": "object",
+        "required": ["modo", "usuario", "fecha", "ejercicio", "series", "repeticiones", "carga_kg"],
+        "properties": {
+          "modo":          { "type": "string", "enum": ["registro"] },
+          "usuario":       { "type": "string", "example": "Ana BJJ" },
+          "fecha":         { "type": "string", "format": "date", "example": "2026-04-25" },
+          "ejercicio":     { "type": "string", "example": "Sentadilla trasera" },
+          "series":        { "type": "integer", "minimum": 1, "example": 5 },
+          "repeticiones":  { "type": "integer", "minimum": 1, "example": 5 },
+          "carga_kg":      { "type": "number",  "minimum": 0, "example": 100 },
+          "duracion_min":  { "type": "number",  "minimum": 0, "example": 45 },
+          "observaciones": { "type": "string",  "example": "Última serie con buena ejecución" }
+        }
+      },
+      "ConsultaHistorial": {
+        "type": "object",
+        "required": ["modo", "usuario"],
+        "properties": {
+          "modo":       { "type": "string", "enum": ["consulta"] },
+          "usuario":    { "type": "string", "example": "Ana BJJ" },
+          "ejercicio":  { "type": "string", "example": "Sentadilla trasera" },
+          "rango_dias": { "type": "integer", "minimum": 1, "example": 30 }
+        }
+      },
+      "RespuestaOk": {
+        "type": "object",
+        "properties": {
+          "ok":      { "type": "boolean", "example": true },
+          "mensaje": { "type": "string",  "example": "Sesión registrada correctamente." },
+          "registros": {
+            "type": "array",
+            "description": "Solo presente en respuestas a consulta.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fecha":         { "type": "string" },
+                "usuario":       { "type": "string" },
+                "ejercicio":     { "type": "string" },
+                "series":        { "type": "integer" },
+                "repeticiones":  { "type": "integer" },
+                "carga_kg":      { "type": "number" },
+                "duracion_min":  { "type": "number" },
+                "observaciones": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "RespuestaError": {
+        "type": "object",
+        "properties": {
+          "ok":    { "type": "boolean", "example": false },
+          "error": { "type": "string",  "example": "Falta campo obligatorio: fecha" }
+        }
+      }
+    }
+  }
+}
