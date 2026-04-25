@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-json:
+    name: Validate JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint all JSON files
+        run: |
+          find . -name "*.json" -not -path "./.git/*" | while read f; do
+            echo "Checking $f ..."
+            python3 -m json.tool "$f" > /dev/null && echo "  OK" || { echo "  FAIL"; exit 1; }
+          done
+
+  check-md-links:
+    name: Check Markdown local links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install markdown-link-check
+        run: npm install -g markdown-link-check
+
+      - name: Check local links in Markdown files
+        run: |
+          find . -name "*.md" -not -path "./.git/*" | while read f; do
+            echo "Checking $f ..."
+            markdown-link-check "$f" \
+              --config .mlc.json \
+              && echo "  OK" || exit 1
+          done

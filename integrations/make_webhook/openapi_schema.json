@@ -1,0 +1,237 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GrappleCoach Progress Webhook",
+    "description": "Webhook para registrar y consultar entrenamientos de atletas de grappling. Reenvía los datos a Make.com, que los persiste en Google Sheets, Notion u otro destino configurado.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "GrappleCoach",
+      "url": "https://github.com/JaimeAmatASD/BjjCoachTN"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://hook.eu2.make.com/REEMPLAZAR-CON-TU-WEBHOOK-ID",
+      "description": "Endpoint del webhook de Make.com (reemplazá la URL por la tuya antes de usar)"
+    }
+  ],
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "registrarOConsultarEntrenamiento",
+        "summary": "Registra un entrenamiento o consulta el historial del atleta",
+        "description": "Endpoint único que acepta dos modos: 'registro' para guardar una sesión nueva, y 'consulta' para recuperar el historial del atleta filtrado por ejercicio y/o rango de fechas.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/RegistroEntrenamiento" },
+                  { "$ref": "#/components/schemas/ConsultaHistorial" }
+                ],
+                "discriminator": {
+                  "propertyName": "modo"
+                }
+              },
+              "examples": {
+                "registro": {
+                  "summary": "Registrar una sesión de fuerza",
+                  "value": {
+                    "modo": "registro",
+                    "usuario": "Ana BJJ",
+                    "fecha": "2026-04-25",
+                    "ejercicio": "Sentadilla trasera",
+                    "series": 5,
+                    "repeticiones": 5,
+                    "carga_kg": 100,
+                    "duracion_min": 45,
+                    "observaciones": "Última serie con buena ejecución"
+                  }
+                },
+                "consulta": {
+                  "summary": "Consultar historial de los últimos 30 días",
+                  "value": {
+                    "modo": "consulta",
+                    "usuario": "Ana BJJ",
+                    "ejercicio": "Sentadilla trasera",
+                    "rango_dias": 30
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación exitosa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegistroEntrenamiento": {
+        "type": "object",
+        "required": [
+          "modo",
+          "usuario",
+          "fecha",
+          "ejercicio",
+          "series",
+          "repeticiones",
+          "carga_kg"
+        ],
+        "properties": {
+          "modo": {
+            "type": "string",
+            "enum": ["registro"],
+            "description": "Indica que es un registro de sesión nueva"
+          },
+          "usuario": {
+            "type": "string",
+            "description": "Identificador del atleta (ej: 'Ana BJJ', 'Juan PowerLifter'). Se mantiene constante durante la sesión.",
+            "example": "Ana BJJ"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha de la sesión en formato ISO 8601 (YYYY-MM-DD)",
+            "example": "2026-04-25"
+          },
+          "ejercicio": {
+            "type": "string",
+            "description": "Nombre del ejercicio realizado",
+            "example": "Sentadilla trasera"
+          },
+          "series": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Número de series ejecutadas",
+            "example": 5
+          },
+          "repeticiones": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Repeticiones por serie",
+            "example": 5
+          },
+          "carga_kg": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Carga utilizada en kilogramos. Para ejercicios de peso corporal usar 0.",
+            "example": 100
+          },
+          "duracion_min": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Duración total de la sesión en minutos (opcional)",
+            "example": 45
+          },
+          "observaciones": {
+            "type": "string",
+            "description": "Notas libres del atleta sobre la sesión (opcional)",
+            "example": "Última serie con buena ejecución"
+          }
+        }
+      },
+      "ConsultaHistorial": {
+        "type": "object",
+        "required": ["modo", "usuario"],
+        "properties": {
+          "modo": {
+            "type": "string",
+            "enum": ["consulta"],
+            "description": "Indica que es una consulta de historial"
+          },
+          "usuario": {
+            "type": "string",
+            "description": "Identificador del atleta",
+            "example": "Ana BJJ"
+          },
+          "ejercicio": {
+            "type": "string",
+            "description": "Filtra por nombre de ejercicio (opcional). Si se omite, devuelve todos los ejercicios.",
+            "example": "Sentadilla trasera"
+          },
+          "rango_dias": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Número de días hacia atrás a consultar (opcional). Si se omite, devuelve el historial completo.",
+            "example": 30
+          }
+        }
+      },
+      "RespuestaOk": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          },
+          "mensaje": {
+            "type": "string",
+            "example": "Sesión registrada correctamente"
+          },
+          "registros": {
+            "type": "array",
+            "description": "Solo presente en respuestas a consulta. Lista de sesiones recuperadas.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fecha": { "type": "string", "format": "date" },
+                "ejercicio": { "type": "string" },
+                "series": { "type": "integer" },
+                "repeticiones": { "type": "integer" },
+                "carga_kg": { "type": "number" },
+                "duracion_min": { "type": "number" },
+                "observaciones": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "RespuestaError": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Faltan campos obligatorios: 'fecha'"
+          }
+        }
+      }
+    }
+  }
+}

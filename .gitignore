@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secretos / configuración local
+.env
+.env.local
+*.key
+
+# Archivos de prueba locales
+/tmp/
+/scratch/
+*.log
+
+# Archivos protegidos por copyright (no subir libros de terceros)
+/private_knowledge/
+*.pdf
+
+# Excel/CSV de progreso de atletas reales (datos personales)
+/athletes_data/
+*.xlsx
+*.csv
